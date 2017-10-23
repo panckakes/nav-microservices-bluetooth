@@ -3,23 +3,21 @@
 
 import os
 
-from flask import Flask, jsonify, current_app
+from flask import Flask, jsonify, current_app, app
 # from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from blue import *
+# from blue import *
 
-#python multi-threading imports
-import threading
-import time
+# #python multi-threading imports
+# import threading
+# import time
 
 
 
 # instantiate the db
 db = SQLAlchemy()
 
-@app.before_first_request
-def scan_bluetooth_job():
-    scan_devices_thread.start()
+
 
 def create_app():
 

@@ -6,13 +6,15 @@ import bluetooth
 import threading
 import time
 
+from flask import Flask, current_app, app
+
 #flask squ alchemy DB
 from sqlalchemy import exc
 
 from project.api.models import Bluetooth
 from project import db
 
-
+app = Flask(__name__)
 ##############################################
 
 ####
@@ -33,20 +35,20 @@ def scan_devices(threadName, counter):
             print("found %d devices" % len(nearby_devices))
             #loop through the devices
             for addr, name in nearby_devices:
-                # with app.app_context():
-                #check to see if the device is already in the database
-                check = db.session.query(db.exists().where(Bluetooth.address == addr)).scalar()
-                #if does not exist, add to database
-                if check == False:
-                    try:
-                        print("  %s - %s" % (addr, name))
-                        #add MAC address and device name to database
-                        db.session.add(Bluetooth(addr=address, name=name))
-                        db.session.commit()
-                    except UnicodeEncodeError:
-                        print("  %s - %s" % (addr, name.encode('utf-8', 'replace')))
-                        db.session.add(Bluetooth(addr=address, name=name.encode('utf-8', 'replace')))
-                        db.session.commit()
+                with app.app_context():
+                    #check to see if the device is already in the database
+                    check = db.session.query(db.exists().where(Bluetooth.address == addr)).scalar()
+                    #if does not exist, add to database
+                    if check == False:
+                        try:
+                            print("  %s - %s" % (addr, name))
+                            #add MAC address and device name to database
+                            db.session.add(Bluetooth(addr=address, name=name))
+                            db.session.commit()
+                        except UnicodeEncodeError:
+                            print("  %s - %s" % (addr, name.encode('utf-8', 'replace')))
+                            db.session.add(Bluetooth(addr=address, name=name.encode('utf-8', 'replace')))
+                            db.session.commit()
 
 
         counter -= 1
@@ -59,17 +61,17 @@ def scan_devices(threadName, counter):
 
 
 def connect_device():
-    # name = name      # Device name
-    # addr = addr      # Device Address
-    # port = 1         # RFCOMM port
-    # passkey = "1111" # passkey of the device you want to connect
+    name = name      # Device name
+    addr = addr      # Device Address
+    port = 1         # RFCOMM port
+    passkey = "1111" # passkey of the device you want to connect
 
 
-    # # kill any "bluetooth-agent" process that is already running
-    # subprocess.call("kill -9 `pidof bluetooth-agent`",shell=True)
-    #
-    # # Start a new "bluetooth-agent" process where XXXX is the passkey
-    # status = subprocess.call("bluetooth-agent " + passkey + " &",shell=True)
+    # kill any "bluetooth-agent" process that is already running
+    subprocess.call("kill -9 `pidof bluetooth-agent`",shell=True)
+
+    # Start a new "bluetooth-agent" process where XXXX is the passkey
+    status = subprocess.call("bluetooth-agent " + passkey + " &",shell=True)
 
 
     print("scanning devices...")

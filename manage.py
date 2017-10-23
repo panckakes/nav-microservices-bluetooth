@@ -6,12 +6,14 @@
 
 from flask_script import Manager
 from project import create_app, db
-from project.api.models import User, Bluetooth
-from blue import *
+from project.api.models import Bluetooth
+# from blue import *
 #
-# #python multi-threading imports
-# import threading
-# import time
+#python multi-threading imports
+import threading
+import time
+import bluetooth
+
 
 # COV = coverage.coverage(
 #     branch=True,
@@ -26,38 +28,71 @@ from blue import *
 app = create_app()
 manager = Manager(app)
 
+@app.before_first_request
+def scan_bluetooth_job():
+
+    def scan_devices(threadName, counter):
+        print("scanning bluetooth devices...")
+        while counter:
+
+            #turn on discover on the bluetooth device --
+            #returns 'addr' and 'name' for output
+            #duration scans on units of 1.28 seconds
+            nearby_devices = bluetooth.discover_devices(
+                    duration=8, lookup_names=True, flush_cache=True, lookup_class=False)
+
+            #if devices were found from the scan
+            if len(nearby_devices) != 0:
+                print("found %d devices" % len(nearby_devices))
+                #loop through the devices
+                for addr, name in nearby_devices:
+                    with app.app_context():
+                        print ('Checking to see if device is in database')
+                        #check to see if the device is already in the database
+                        check = db.session.query(db.exists().where(Bluetooth.address == addr)).scalar()
+                        #if does not exist, add to database
+                        print check
+                        if check == False:
+                            print ('device not in databse')
+                            try:
+                                print("Adding  %s - %s to databse" % (addr, name))
+                                #add MAC address and device name to database
+                                db.session.add(Bluetooth(address=addr, name=name))
+                                db.session.commit()
+                                print ('great success!')
+                            except UnicodeEncodeError:
+                                print("  %s - %s" % (addr, name.encode('utf-8', 'replace')))
+                                db.session.add(Bluetooth(addr=address, name=name.encode('utf-8', 'replace')))
+                                db.session.commit()
 
 
+            counter = 1
 
-# def start_runner():
-    # def recreate_test_databases(engine = None, session = None):
-    #   if engine == None:
-    #     engine = db.engine
-    #   if session == None:
-    #     session = db.session
-    #
-    # Base.metadata.drop_all(bind=engine)
-    # Base.metadata.create_all(bind=engine)
+            #exits the thread
+            if exitFlag:
+                threadName.exit()
 
-    # with app.app_context():
-    #     scan_devices_thread.start()
-    # # def start_loop():
-    #     not_started = True
-    #     while not_started:
-    #         print('In start loop')
-    #         try:
-    #             r = requests.get('http://127.0.0.1:5000/')
-    #             if r.status_code == 200:
-    #                 print('Server started, quiting start_loop')
-    #                 not_started = False
-    #             print(r.status_code)
-    #         except:
-    #             print('Server not yet started')
-    #         time.sleep(2)
-    #
-    # print('Started runner')
-    # thread = threading.Thread(target=start_loop)
-    # thread.start()
+####
+###### - MULTITHREADING FUNCTIONS - ######
+####
+    exitFlag = 0
+
+    class scanDevicesThread (threading.Thread):
+       def __init__(self, threadID, name, counter):
+          threading.Thread.__init__(self)
+          self.threadID = threadID
+          self.name = name
+          self.counter = counter
+       def run(self):
+          print "Starting " + self.name
+          scan_devices(self.name, self.counter)
+          print "Exiting " + self.name
+
+    scan_devices_thread = scanDevicesThread(1, "scan_devices", 10)
+
+    scan_devices_thread.start()
+
+
 
 @manager.command
 def test():
@@ -108,5 +143,6 @@ def seed_db():
 
 if __name__ == '__main__':
     # start_runner()
+    scan_bluetooth_job()
     manager.run()
     #start bluetooth scan
