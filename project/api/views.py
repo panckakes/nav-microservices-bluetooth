@@ -4,7 +4,7 @@
 from flask import Blueprint, jsonify, request, make_response, render_template
 from sqlalchemy import exc
 
-from project.api.models import User, Bluetooth
+from project.api.models import Bluetooth
 from project import db
 
 
@@ -12,18 +12,18 @@ bluetooth_blueprint = Blueprint('bluetooth', __name__, template_folder='./templa
 
 @bluetooth_blueprint.route('/', methods=['GET', 'POST'])
 def index():
-    if request.method == 'POST':
-        if request.form['submit']:
-            username = request.form['username']
-            email = request.form['email']
-            db.session.add(User(username=username, email=email))
-            db.session.commit()
-        elif request.form['Search']:
-            scan_devices()
+    # if request.method == 'POST':
+    #     if request.form['submit']:
+    #         username = request.form['username']
+    #         email = request.form['email']
+    #         db.session.add(User(username=username, email=email))
+    #         db.session.commit()
+    #     elif request.form['Search']:
+            # scan_devices()
 
-    users = User.query.order_by(User.created_at.desc()).all()
+    # users = User.query.order_by(User.created_at.desc()).all()
     devices = Bluetooth.query.order_by(Bluetooth.created_at.desc()).all()
-    return render_template('index.html', users=users, devices=devices)
+    return render_template('index.html', devices=devices)
 
 # some function needs to run when the container starts to attempt to connect
 # to the last device connected and start scanning devices in the area

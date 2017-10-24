@@ -3,10 +3,12 @@
 
 # import unittest
 # import coverage
-
+from flask import Flask, Blueprint
 from flask_script import Manager
+from flask_restful import Api, Resource
 from project import create_app, db
 from project.api.models import Bluetooth
+from project.api.rest import HelloWorld, TodoItem, BluetoothDevices
 # from blue import *
 #
 #python multi-threading imports
@@ -24,9 +26,23 @@ import bluetooth
 # )
 # COV.start()
 
-
 app = create_app()
 manager = Manager(app)
+# api_bp = Blueprint('api', __name__)
+api = Api(app)
+
+
+# class HelloWorld(Resource):
+#     def get(self):
+#         return {'hello': 'world'}
+
+# app.register_blueprint(api_bp)
+
+api.add_resource(TodoItem, '/todos/<int:id>')
+api.add_resource(HelloWorld, '/hello')
+api.add_resource(BluetoothDevices, '/bluetooth')
+
+
 
 @app.before_first_request
 def scan_bluetooth_job():
@@ -51,9 +67,9 @@ def scan_bluetooth_job():
                         #check to see if the device is already in the database
                         check = db.session.query(db.exists().where(Bluetooth.address == addr)).scalar()
                         #if does not exist, add to database
-                        print check
+                        print ('databse query returned %s' % check)
                         if check == False:
-                            print ('device not in databse')
+                            print ('%s not in databse' % name)
                             try:
                                 print("Adding  %s - %s to databse" % (addr, name))
                                 #add MAC address and device name to database
@@ -70,6 +86,7 @@ def scan_bluetooth_job():
 
             #exits the thread
             if exitFlag:
+                print ('shutting down bluetooth scan')
                 threadName.exit()
 
 ####
@@ -134,8 +151,6 @@ def recreate_db():
 @manager.command
 def seed_db():
     """Seeds the database."""
-    db.session.add(User(username='michael', email="michael@realpython.com"))
-    db.session.add(User(username='michaelherman', email="michael@mherman.org"))
     db.session.add(Bluetooth(name='michaels_iphone', address="00:11:22:33:FF:EE"))
     db.session.add(Bluetooth(name='michaels_other_iphone', address="04:64:22:DE:AC:EE"))
     db.session.commit()
