@@ -15,24 +15,26 @@ If the function finds a new device that is not in the database it will add it
 /bluetooth_scan/off
 ```
 Stops searching for bluetooth devices
-
+  
+  
   
   **Connect Devices**
   ```sh
 /bluetooth/connect/<device_id>
 ```
 Connects to a specific device
-
+  
   
   **Disconnect devices**
   ```sh
 /bluetooth/disconnect/<device_id>
 ```
 Disconnects device
-
+  
 **Make discoverable / start server**
 
 ```sh
 /bluetooth/server/up
 ```
 Starts bluetooth server so devices can find and be able to connect to software
+  
